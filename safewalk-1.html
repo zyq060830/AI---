@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeWalk - 夜间安全陪伴系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            background: #0a0a0a;
+            border-radius: 40px;
+            border: 12px solid #1a1a1a;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: #fff;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .screen {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #0f0c29, #302b63);
+            position: relative;
+        }
+
+        .page {
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            padding: 40px 20px;
+            animation: fadeIn 0.5s ease-in;
+            overflow-y: auto;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== 首页 ===== */
+        .page-home {
+            justify-content: space-between;
+        }
+
+        .home-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .input-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-label {
+            color: #999;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .emotion-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            min-height: 80px;
+            resize: none;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .emotion-input:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.8);
+            background: rgba(102, 126, 234, 0.15);
+        }
+
+        .destination-input {
+            padding: 14px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .destination-input:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.8);
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* ===== AI分析页 ===== */
+        .page-analyzing {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .analyzing-content {
+            text-align: center;
+        }
+
+        .analyzing-title {
+            color: #fff;
+            font-size: 20px;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 40px;
+            border: 3px solid rgba(102, 126, 234, 0.2);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .analyzing-text {
+            color: #999;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ===== 路线推荐页 ===== */
+        .page-routes {
+            justify-content: flex-start;
+            padding-top: 30px;
+        }
+
+        .routes-header {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .routes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .route-card {
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .route-card:hover {
+            border-color: rgba(102, 126, 234, 0.8);
+            background: rgba(102, 126, 234, 0.15);
+        }
+
+        .route-card.recommended {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid rgba(102, 126, 234, 0.6);
+        }
+
+        .route-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .route-name {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .route-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .info-item {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .info-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .route-desc {
+            color: #bbb;
+            font-size: 12px;
+            line-height: 1.5;
+            padding-top: 12px;
+            border-top: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        /* ===== AI陪伴页 ===== */
+        .page-journey {
+            padding-top: 20px;
+        }
+
+        .journey-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+        }
+
+        .route-info-text {
+            color: #fff;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .route-info-text strong {
+            color: #667eea;
+        }
+
+        .location-badge {
+            display: inline-block;
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .map-container {
+            height: 180px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mock-map {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            position: relative;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .route-line {
+            position: absolute;
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            top: 50%;
+            left: 10%;
+            animation: flowLine 2s ease-in-out infinite;
+        }
+
+        @keyframes flowLine {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .user-position {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            top: 50%;
+            left: 15%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+        }
+
+        .destination-marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            top: 50%;
+            right: 10%;
+            transform: translate(50%, -50%);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 3px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 35%;
+            border-radius: 3px;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .ai-message {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .ai-text {
+            color: #fff;
+            font-size: 14px;
+            line-height: 1.6;
+            animation: typing 1.5s ease-in-out;
+        }
+
+        @keyframes typing {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .status-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #bbb;
+        }
+
+        .status-icon {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 107, 107, 0.25);
+            border-color: rgba(255, 107, 107, 0.6);
+        }
+
+        /* ===== 到家页 ===== */
+        .page-arrived {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .arrived-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .arrived-title {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .arrived-text {
+            color: #999;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 280px;
+        }
+
+        .friends-notified {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .friends-title {
+            color: #667eea;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .friend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .friend-icon {
+            color: #667eea;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+        }
+
+        .btn-outline:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: rgba(102, 126, 234, 0.6);
+        }
+
+        /* ===== 底部导航 ===== */
+        .bottom-nav {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            color: #667eea;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .nav-btn.hidden {
+            display: none;
+        }
+
+        /* 滚动条 */
+        .screen::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .screen::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .screen::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 3px;
+        }
+
+        .screen::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="phone-frame">
+            <div class="status-bar">
+                <span>9:41</span>
+                <span>SafeWalk</span>
+                <span>100%</span>
+            </div>
+
+            <div class="screen">
+                <!-- 首页 -->
+                <div class="page page-home active" data-page="home">
+                    <div class="home-header">
+                        <div class="logo">SafeWalk</div>
+                        <div class="tagline">你的夜间安全陪伴</div>
+                    </div>
+
+                    <div class="input-section">
+                        <div class="input-group">
+                            <label class="input-label">你现在的状态</label>
+                            <textarea class="emotion-input" id="emotionInput" placeholder="比如：刚到深圳不久，今晚加班很晚，一个人不太熟路，有点害怕">刚到深圳不久，今晚加班很晚，一个人不太熟路，有点害怕</textarea>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">目的地</label>
+                            <input type="text" class="destination-input" id="destinationInput" placeholder="我的租住地 - 南山科技园附近" value="我的租住地 - 南山科技园附近">
+                        </div>
+
+                        <button class="btn btn-primary" onclick="startJourney()">为我规划安全路线</button>
+                    </div>
+                </div>
+
+                <!-- AI分析中 -->
+                <div class="page page-analyzing" data-page="analyzing">
+                    <div class="analyzing-content">
+                        <div class="analyzing-title">AI正在为你规划<br>最安全的回家路线</div>
+                        <div class="loading-spinner"></div>
+                        <div class="analyzing-text">
+                            分析你的状态...<br>
+                            识别安全风险...<br>
+                            生成路线方案...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 路线推荐 -->
+                <div class="page page-routes" data-page="routes">
+                    <div class="routes-header">推荐的安全路线</div>
+                    <div class="routes-list">
+                        <div class="route-card recommended" onclick="selectRoute(1)">
+                            <div class="route-badge">✓ 最推荐</div>
+                            <div class="route-name">主干道热闹路线</div>
+                            <div class="route-info">
+                                <div class="info-item">⏱️ 时间：<span class="info-value">18 分钟</span></div>
+                                <div class="info-item">🛡️ 安全指数：<span class="info-value">92 分</span></div>
+                            </div>
+                            <div class="route-info">
+                                <div class="info-item">👥 人流热度：<span class="info-value">很高</span></div>
+                                <div class="info-item">💡 路灯覆盖：<span class="info-value">95%</span></div>
+                            </div>
+                            <div class="route-desc">这条路是这片最热闹的区域，便利店超多，随时可以进去避一下，摄像头覆盖也很完善，非常安全。</div>
+                        </div>
+
+                        <div class="route-card" onclick="selectRoute(2)">
+                            <div class="route-name">地铁口快速路线</div>
+                            <div class="route-info">
+                                <div class="info-item">⏱️ 时间：<span class="info-value">15 分钟</span></div>
+                                <div class="info-item">🛡️ 安全指数：<span class="info-value">85 分</span></div>
+                            </div>
+                            <div class="route-info">
+                                <div class="info-item">👥 人流热度：<span class="info-value">中等</span></div>
+                                <div class="info-item">💡 路灯覆盖：<span class="info-value">88%</span></div>
+                            </div>
+                            <div class="route-desc">经过地铁口，人流密集，但有部分小街区光照较弱。</div>
+                        </div>
+
+                        <div class="route-card" onclick="selectRoute(3)">
+                            <div class="route-name">便利店密集路线</div>
+                            <div class="route-info">
+                                <div class="info-item">⏱️ 时间：<span class="info-value">20 分钟</span></div>
+                                <div class="info-item">🛡️ 安全指数：<span class="info-value">89 分</span></div>
+                            </div>
+                            <div class="route-info">
+                                <div class="info-item">👥 人流热度：<span class="info-value">中等</span></div>
+                                <div class="info-item">💡 路灯覆盖：<span class="info-value">90%</span></div>
+                            </div>
+                            <div class="route-desc">经过4家24小时便利店，随时可以进去休息或求助。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI陪伴中 -->
+                <div class="page page-journey" data-page="journey">
+                    <div class="journey-header">
+                        <div class="route-info-text">
+                            从 <strong>科技园</strong><br>到 <strong>租住地</strong>
+                        </div>
+                        <div class="location-badge" id="journeyTime">18 分钟</div>
+                    </div>
+
+                    <div class="map-container">
+                        <div class="mock-map">
+                            <div class="route-line"></div>
+                            <div class="user-position"></div>
+                            <div class="destination-marker"></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+
+                    <div class="time-info">
+                        <span id="currentTime">已行走 3 分钟</span>
+                        <span id="remainTime">剩余 15 分钟</span>
+                    </div>
+
+                    <div class="ai-message">
+                        <div class="ai-text" id="aiMessage">这条路往左转哦，你现在在深圳湾路，这是主干道，人很多，很安全 🛡️</div>
+                    </div>
+
+                    <div class="status-items">
+                        <div class="status-item">
+                            <span class="status-icon">✓</span>
+                            <span>共享定位已开启</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-icon">✓</span>
+                            <span>妈妈正在守护</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-icon">✓</span>
+                            <span>闺蜜已收到实时定位</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="nextStep()">继续行程</button>
+                    <button class="btn btn-secondary" onclick="triggerSOS()">需要帮助</button>
+                </div>
+
+                <!-- 到家页 -->
+                <div class="page page-arrived" data-page="arrived">
+                    <div class="arrived-content">
+                        <div class="success-icon">🏠</div>
+                        <div class="arrived-title">已安全到家</div>
+                        <div class="arrived-text">
+                            祝你睡眠安好。明天继续加油哦。我会一直在这里，每一次回家，我都陪你。
+                        </div>
+
+                        <div class="friends-notified">
+                            <div class="friends-title">✓ 已通知</div>
+                            <div class="friend-item">
+                                <span class="friend-icon">👩</span>
+                                <span>妈妈已收到你安全到家的通知</span>
+                            </div>
+                            <div class="friend-item">
+                                <span class="friend-icon">👯</span>
+                                <span>闺蜜已收到你安全到家的通知</span>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="goHome()">返回首页</button>
+                            <button class="btn btn-outline" onclick="shareStory()">分享这次旅程</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn" onclick="showPage('home')" id="navHome">首页</button>
+                <button class="nav-btn" onclick="showPage('routes')" id="navRoutes">路线</button>
+                <button class="nav-btn" onclick="showPage('journey')" id="navJourney">陪伴中</button>
+                <button class="nav-btn" onclick="showPage('arrived')" id="navArrived">已到家</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 'home';
+        let journeyStep = 0;
+        const journeyMessages = [
+            '这条路往左转哦，你现在在深圳湾路，这是主干道，人很多，很安全 🛡️',
+            '前面这段路比较安静，但别担心，最近的便利店只有100米，需要可以进去休息 🏪',
+            '现在你在南山商业街，这是整片最热闹的区域，周围都是夜生活商家，很多人，放心走 ✨',
+            '再坚持10分钟，你就到家了。今晚辛苦了，一个人在陌生城市很不容易 💪'
+        ];
+
+        function showPage(pageName) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // 显示选定页面
+            document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+            currentPage = pageName;
+
+            // 更新导航按钮
+            updateNav();
+        }
+
+        function updateNav() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('hidden'));
+            
+            // 隐藏不需要的导航
+            if (currentPage === 'analyzing') {
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.add('hidden'));
+            }
+        }
+
+        function startJourney() {
+            const emotion = document.getElementById('emotionInput').value;
+            const destination = document.getElementById('destinationInput').value;
+
+            if (!emotion.trim() || !destination.trim()) {
+                alert('请填写你的状态和目的地');
+                return;
+            }
+
+            // 进入分析页面
+            showPage('analyzing');
+
+            // 3秒后进入路线推荐
+            setTimeout(() => {
+                showPage('routes');
+            }, 3000);
+        }
+
+        function selectRoute(routeNum) {
+            journeyStep = 0;
+            showPage('journey');
+            updateJourneyProgress();
+        }
+
+        function nextStep() {
+            journeyStep++;
+            
+            if (journeyStep >= journeyMessages.length) {
+                // 到家了
+                showPage('arrived');
+            } else {
+                updateJourneyProgress();
+            }
+        }
+
+        function updateJourneyProgress() {
+            const totalSteps = 4;
+            const progress = ((journeyStep + 1) / totalSteps) * 100;
+            
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('aiMessage').textContent = journeyMessages[journeyStep];
+            
+            const minutes = 3 + (journeyStep + 1) * 5;
+            const remaining = 18 - minutes;
+            document.getElementById('currentTime').textContent = `已行走 ${minutes} 分钟`;
+            document.getElementById('remainTime').textContent = `剩余 ${remaining} 分钟`;
+            document.getElementById('journeyTime').textContent = remaining + ' 分钟';
+        }
+
+        function triggerSOS() {
+            alert('✓ 已通知紧急联系人\n✓ 实时位置同步中\n\n附近24小时便利店已标记\n最近的警察局：南山分局（800米）');
+        }
+
+        function goHome() {
+            journeyStep = 0;
+            document.getElementById('emotionInput').value = '';
+            document.getElementById('destinationInput').value = '';
+            showPage('home');
+        }
+
+        function shareStory() {
+            alert('感谢使用 SafeWalk！\n\n你的这次安全回家体验已被记录。\n下一次出行时，AI会更加了解你的安全需求。');
+        }
+
+        // 初始化
+        updateNav();
+    </script>
+</body>
+</html>
